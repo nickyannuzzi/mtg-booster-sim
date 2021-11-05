@@ -2,13 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
-import Setdropdown from './SetDropdown'
+import SetDropdown from './SetDropdown'
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
     <App />
-    <Setdropdown />
+    <SetDropdown />
   </React.StrictMode>,
   document.getElementById('root')
 );

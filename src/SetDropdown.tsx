@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Select from 'react-select';
 
 import axios from 'axios';
 
@@ -11,11 +12,8 @@ class SetDropdown extends Component {
         {
             setData: {},
             setMap: {},
-            selectedSet: ''
+            selectedSet : ''
         }
-        this.handleOpenPack = this.handleOpenPack.bind(this);
-        this.handleChange = this.handleChange.bind(this);
-
     }
     componentDidMount() {
         //get sets from mtg api, add to state
@@ -23,9 +21,6 @@ class SetDropdown extends Component {
         axios.get('https://api.magicthegathering.io/v1/sets?type=expansion').then(data =>
             this.updateSets(data)
         );
-    }
-    componentDidUpdate() {
-        console.log(this.state);
     }
     updateSets(argData) {
         //return dropbox element with all sets?
@@ -38,19 +33,17 @@ class SetDropdown extends Component {
         console.log(setInformation);
         this.setState({ setMap: dict });
         console.log(this.state);
-
+        
     }
-    handleOpenPack() {
+    handleOpenPack()
+    {
         console.log('opening pack...');
     }
-
     handleChange(e) {
-        if (e.target.value) {
-            this.setState({selectedSet : e.target.value});
-        }
-    }
-
-
+        this.setState({selectedSet : e.target.value});
+        console.log(this.state.selectedSet);
+    };
+    
     render() {
         var options = [];
         Object.keys(this.state.setMap).forEach(x =>
@@ -58,17 +51,12 @@ class SetDropdown extends Component {
 
         return (<div>
             <div className="dropdownMenu">
-                <select onChange={this.handleChange} options={options}>
-                    {options.map((option) => <option value={options.value}>{option.label}</option>)}
-                </select>
+                <Select options={options}> onChange={this.handleChange}</Select>
             </div>
-            <button type="button" onClick={this.handleOpenPack}>Open pack!</button>
+            <button type = "button" onClick={this.handleOpenPack}>Open pack!</button>
         </div>);
     }
 
 
 }
-
-
-
 export default SetDropdown;
