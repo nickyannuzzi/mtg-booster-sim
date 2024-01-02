@@ -25,7 +25,7 @@ class SetDropdown extends Component {
         );
     }
     componentDidUpdate() {
-        console.log(this.state);
+       // console.log(this.state);
     }
     updateSets(argData) {
         //return dropbox element with all sets?
@@ -37,11 +37,12 @@ class SetDropdown extends Component {
         setInformation.map((mtgSet) => dict[mtgSet.name] = mtgSet); //is there a better react way to do this?
         console.log(setInformation);
         this.setState({ setMap: dict });
+        this.setState({selectedSet : setInformation[0].name});
         console.log(this.state);
 
     }
     handleOpenPack() {
-        console.log('opening pack...');
+        console.log(this.state.selectedSet + ' opening pack...');
 
         //TODO: open a pack! Will have to decide how many rares/commons per pack
     }
