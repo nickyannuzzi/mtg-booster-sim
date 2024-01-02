@@ -42,6 +42,8 @@ class SetDropdown extends Component {
     }
     handleOpenPack() {
         console.log('opening pack...');
+
+        //TODO: open a pack! Will have to decide how many rares/commons per pack
     }
 
     handleChange(e) {
