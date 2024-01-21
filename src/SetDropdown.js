@@ -14,8 +14,11 @@ class SetDropdown extends Component {
             selectedSet: '',
             commonList : [],
             uncommonList : [],
-            rareList : []
+            rareList : [],
+            openedCards : [],
+            imageUrl: ""
         }
+        this.state.openedCards.push({});
         this.handleOpenPack = this.handleOpenPack.bind(this);
         this.handleChange = this.handleChange.bind(this);
 
@@ -82,6 +85,7 @@ class SetDropdown extends Component {
       
 
         let openedCards = [];
+        this.state.openedCards = [];
 
         for(let i = 0; i < boosterTemplate.rare; i ++){
             let card = this.state.rareList[Math.floor(Math.random()*this.state.rareList.length)];
@@ -98,7 +102,9 @@ class SetDropdown extends Component {
             openedCards.push(card);
         }
 
-
+        this.state.openedCards = openedCards;
+        this.setState({imageUrl : openedCards[0].image_uris.small})
+       
         console.log("Set contains some cards!");
         console.log("you opened: " + openedCards);
 
@@ -192,6 +198,8 @@ class SetDropdown extends Component {
                 </select>
             </div>
             <button type="button" id="open-button" onClick={this.handleOpenPack}>Open pack!</button>
+            <br></br>
+            <img src={this.state.imageUrl} alt={this.state.openedCards.name}></img>
         </div>);
     }
 
