@@ -11,7 +11,10 @@ class SetDropdown extends Component {
         {
             setData: {},
             setMap: {},
-            selectedSet: ''
+            selectedSet: '',
+            commonList : [],
+            uncommonList : [],
+            rareList : []
         }
         this.handleOpenPack = this.handleOpenPack.bind(this);
         this.handleChange = this.handleChange.bind(this);
@@ -27,7 +30,7 @@ class SetDropdown extends Component {
     componentDidUpdate() {
        // console.log(this.state);
     }
-    updateSets(argData) {
+    async updateSets(argData) {
         //return dropbox element with all sets?
         var setInformation = argData.data.sets;
         this.setState({ setData: { setInformation } }); //update state
@@ -41,8 +44,27 @@ class SetDropdown extends Component {
         console.log(this.state);
 
     }
+    async grabCardsForSet(set){
+        let code = "";
+        //get number of cards in set
+        let setSize;
+        await axios.get("https://api.scryfall.com/sets/" + this.state.setMap[set].code).then(response=>{
+            if(response.data.card_count)
+                setSize = response.data.card_count;
+            if(response.data.code){
+                code = response.data.code;
+            }
+        })
+
+        //get all cards
+      
+       
+        await this.getCardsForSet(code,setSize);
+        document.getElementById("open-button").disabled = false;
+    }
+
     
-    handleOpenPack() {
+    async handleOpenPack() {
         console.log(this.state.selectedSet + ' opening pack...');
 
         let set = this.state.selectedSet;
@@ -56,10 +78,29 @@ class SetDropdown extends Component {
 
         console.log(boosterTemplate);
 
-        let payload = {"set" : set};
-        axios.post("https://api.scryfall.com/cards/collection",payload).then(response=>{
-            console.log(response);
-        })
+
+      
+
+        let openedCards = [];
+
+        for(let i = 0; i < boosterTemplate.rare; i ++){
+            let card = this.state.rareList[Math.floor(Math.random()*this.state.rareList.length)];
+            openedCards.push(card);
+        }
+
+        for(let i = 0; i < boosterTemplate.uncommon; i ++){
+            let card = this.state.uncommonList[Math.floor(Math.random()*this.state.uncommonList.length)];
+            openedCards.push(card);
+        }
+
+        for(let i = 0; i < boosterTemplate.common; i ++){
+            let card = this.state.commonList[Math.floor(Math.random()*this.state.commonList.length)];
+            openedCards.push(card);
+        }
+
+
+        console.log("Set contains some cards!");
+        console.log("you opened: " + openedCards);
 
         //TODO: open a pack! Will have to decide how many rares/commons per pack
     }
@@ -67,6 +108,7 @@ class SetDropdown extends Component {
     handleChange(e) {
         if (e.target.value) {
             this.setState({selectedSet : e.target.value});
+            this.grabCardsForSet(e.target.value);
         }
     }
 
@@ -87,6 +129,11 @@ class SetDropdown extends Component {
         let uncommonCount = 0;
         let commonCount = 0;
         booster.forEach(b =>{
+            if(Array.isArray(b)){
+                if(b[0]){
+                    rareCount ++;
+                }
+            }
             switch(b){
                 case "rare": rareCount ++; break;
                 case "uncommon" : uncommonCount ++; break;
@@ -103,6 +150,35 @@ class SetDropdown extends Component {
         return retVal;
     }
 
+    async getCardsForSet(setCode,setSize){
+        this.state.rareList = [];
+        this.state.uncommonList = [];
+        this.state.commonList = [];
+        document.getElementById("open-button").disabled = true;
+
+        for (let i = 1; i < setSize; i ++){
+            await axios.get("https://api.scryfall.com/cards/" + setCode + "/" + i).then(card=>{
+                if(card != null){
+                    if(card.data != null){
+                        if(card.data.rarity === "rare" || card.data.rarity === "mythic"){
+                            this.state.rareList.push(card.data);
+                        }
+                        else if(card.data.rarity === "uncommon"){
+                            this.state.uncommonList.push(card.data)
+                        }
+                        else{
+                            this.state.commonList.push(card.data);
+                        }
+                    }
+                   
+
+                }
+            }).catch(e=>{
+                console.log("got a dud!!");
+            })};
+        
+    }
+
 
     render() {
         var options = [];
@@ -115,7 +191,7 @@ class SetDropdown extends Component {
                     {options.map((option) => <option value={options.value}>{option.label}</option>)}
                 </select>
             </div>
-            <button type="button" onClick={this.handleOpenPack}>Open pack!</button>
+            <button type="button" id="open-button" onClick={this.handleOpenPack}>Open pack!</button>
         </div>);
     }
 
