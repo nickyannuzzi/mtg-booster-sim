@@ -29,6 +29,8 @@ class SetDropdown extends Component {
         axios.get('https://api.magicthegathering.io/v1/sets?type=expansion').then(data =>
             this.updateSets(data)
         );
+        document.getElementById("open-button").disabled = true;
+
     }
     componentDidUpdate() {
        // console.log(this.state);
@@ -48,6 +50,7 @@ class SetDropdown extends Component {
 
     }
     async grabCardsForSet(set){
+        document.getElementById("open-button").disabled = false;
         let code = "";
         //get number of cards in set
         let setSize;
@@ -100,6 +103,23 @@ class SetDropdown extends Component {
         for(let i = 0; i < boosterTemplate.common; i ++){
             let card = this.state.commonList[Math.floor(Math.random()*this.state.commonList.length)];
             openedCards.push(card);
+        }
+
+         //we go pure js until we learn react!!!!111
+        for(let i = 0; i < openedCards.length; i ++){
+            let newNode = document.getElementById("pack-frame").children[0].cloneNode(true);
+            newNode.src = openedCards[i].image_uris.small;
+            newNode.alt = openedCards[i].name;
+            newNode.id = "id" + openedCards[i].name;
+            newNode.classList.add("card");
+
+            document.getElementById("pack-frame").appendChild(newNode);
+
+           
+        }
+
+        if(document.getElementById("base-img")){
+            document.getElementById("base-img").remove();
         }
 
         this.state.openedCards = openedCards;
@@ -191,7 +211,7 @@ class SetDropdown extends Component {
         Object.keys(this.state.setMap).forEach(x =>
             options.push({ 'value': this.state.setMap[x], 'label': x }));
 
-        return (<div>
+        return (<div class="background">
             <div className="dropdownMenu">
                 <select onChange={this.handleChange} options={options}>
                     {options.map((option) => <option value={options.value}>{option.label}</option>)}
@@ -199,7 +219,9 @@ class SetDropdown extends Component {
             </div>
             <button type="button" id="open-button" onClick={this.handleOpenPack}>Open pack!</button>
             <br></br>
-            <img src={this.state.imageUrl} alt={this.state.openedCards.name}></img>
+            <div class = "pack" id="pack-frame">
+                <img class="hidden" id="base-img" src={""} alt={""}></img>
+            </div>
         </div>);
     }
 
