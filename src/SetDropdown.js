@@ -44,6 +44,17 @@ class SetDropdown extends Component {
     handleOpenPack() {
         console.log(this.state.selectedSet + ' opening pack...');
 
+        let set = this.state.selectedSet;
+        let boosterTemplate = {};
+        if(this.state.setMap[set].booster){
+            console.log(this.state.setMap[set].booster);
+            boosterTemplate = this.convertBooster(this.state.setMap[set].booster);
+        }else{
+            boosterTemplate = this.convertBooster();
+        }
+
+        console.log(boosterTemplate);
+
         //TODO: open a pack! Will have to decide how many rares/commons per pack
     }
 
@@ -51,6 +62,39 @@ class SetDropdown extends Component {
         if (e.target.value) {
             this.setState({selectedSet : e.target.value});
         }
+    }
+
+    convertBooster(booster){
+        if(booster == null){
+            let retVal = {
+                "rare" : 1,
+                "uncommon" : 3,
+                "common" : 11
+            }
+            return retVal;
+        }
+        
+        console.log(booster);
+        
+       
+        let rareCount = 0;
+        let uncommonCount = 0;
+        let commonCount = 0;
+        booster.forEach(b =>{
+            switch(b){
+                case "rare": rareCount ++; break;
+                case "uncommon" : uncommonCount ++; break;
+                case "common" : commonCount ++; break;
+                default : commonCount ++; break;
+            }
+
+        })
+        let retVal = {
+            "rare" : rareCount,
+            "uncommon" : uncommonCount,
+            "common" : commonCount
+        }
+        return retVal;
     }
 
 
