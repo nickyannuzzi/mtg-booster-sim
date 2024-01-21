@@ -41,6 +41,7 @@ class SetDropdown extends Component {
         console.log(this.state);
 
     }
+    
     handleOpenPack() {
         console.log(this.state.selectedSet + ' opening pack...');
 
@@ -54,6 +55,11 @@ class SetDropdown extends Component {
         }
 
         console.log(boosterTemplate);
+
+        let payload = {"set" : set};
+        axios.post("https://api.scryfall.com/cards/collection",payload).then(response=>{
+            console.log(response);
+        })
 
         //TODO: open a pack! Will have to decide how many rares/commons per pack
     }
