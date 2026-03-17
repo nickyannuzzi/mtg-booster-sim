@@ -1,233 +1,229 @@
-import React, { Component } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import axios from 'axios';
+import './setDropdown.css';
+import {
+  fetchExpansionSets,
+  fetchSetCards,
+} from './api/mtgApi';
 
+const DEFAULT_BOOSTER = {
+  rare: 1,
+  uncommon: 3,
+  common: 11,
+};
 
-class SetDropdown extends Component {
-    setMap = {};
-    constructor(props) {
-        super(props);
-        this.state =
-        {
-            setData: {},
-            setMap: {},
-            selectedSet: '',
-            commonList : [],
-            uncommonList : [],
-            rareList : [],
-            openedCards : [],
-            imageUrl: ""
-        }
-        this.state.openedCards.push({});
-        this.handleOpenPack = this.handleOpenPack.bind(this);
-        this.handleChange = this.handleChange.bind(this);
+function convertBooster(booster) {
+  if (!booster) {
+    return DEFAULT_BOOSTER;
+  }
 
-    }
-    componentDidMount() {
-        //get sets from mtg api, add to state
+  return booster.reduce(
+    (counts, slot) => {
+      if (Array.isArray(slot)) {
+        return {
+          ...counts,
+          rare: counts.rare + 1,
+        };
+      }
 
-        axios.get('https://api.magicthegathering.io/v1/sets?type=expansion').then(data =>
-            this.updateSets(data)
-        );
-        document.getElementById("open-button").disabled = true;
-
-    }
-    componentDidUpdate() {
-       // console.log(this.state);
-    }
-    async updateSets(argData) {
-        //return dropbox element with all sets?
-        var setInformation = argData.data.sets;
-        this.setState({ setData: { setInformation } }); //update state
-
-        //make map set.name -> set object
-        var dict = {};
-        setInformation.map((mtgSet) => dict[mtgSet.name] = mtgSet); //is there a better react way to do this?
-        console.log(setInformation);
-        this.setState({ setMap: dict });
-        this.setState({selectedSet : setInformation[0].name});
-        console.log(this.state);
-
-    }
-    async grabCardsForSet(set){
-        document.getElementById("open-button").disabled = false;
-        let code = "";
-        //get number of cards in set
-        let setSize;
-        await axios.get("https://api.scryfall.com/sets/" + this.state.setMap[set].code).then(response=>{
-            if(response.data.card_count)
-                setSize = response.data.card_count;
-            if(response.data.code){
-                code = response.data.code;
-            }
-        })
-
-        //get all cards
-      
-       
-        await this.getCardsForSet(code,setSize);
-        document.getElementById("open-button").disabled = false;
-    }
-
-    
-    async handleOpenPack() {
-        console.log(this.state.selectedSet + ' opening pack...');
-
-        let set = this.state.selectedSet;
-        let boosterTemplate = {};
-        if(this.state.setMap[set].booster){
-            console.log(this.state.setMap[set].booster);
-            boosterTemplate = this.convertBooster(this.state.setMap[set].booster);
-        }else{
-            boosterTemplate = this.convertBooster();
-        }
-
-        console.log(boosterTemplate);
-
-
-      
-
-        let openedCards = [];
-        this.state.openedCards = [];
-
-        for(let i = 0; i < boosterTemplate.rare; i ++){
-            let card = this.state.rareList[Math.floor(Math.random()*this.state.rareList.length)];
-            openedCards.push(card);
-        }
-
-        for(let i = 0; i < boosterTemplate.uncommon; i ++){
-            let card = this.state.uncommonList[Math.floor(Math.random()*this.state.uncommonList.length)];
-            openedCards.push(card);
-        }
-
-        for(let i = 0; i < boosterTemplate.common; i ++){
-            let card = this.state.commonList[Math.floor(Math.random()*this.state.commonList.length)];
-            openedCards.push(card);
-        }
-
-         //we go pure js until we learn react!!!!111
-        for(let i = 0; i < openedCards.length; i ++){
-            let newNode = document.getElementById("pack-frame").children[0].cloneNode(true);
-            newNode.src = openedCards[i].image_uris.small;
-            newNode.alt = openedCards[i].name;
-            newNode.id = "id" + openedCards[i].name;
-            newNode.classList.add("card");
-
-            document.getElementById("pack-frame").appendChild(newNode);
-
-           
-        }
-
-        if(document.getElementById("base-img")){
-            document.getElementById("base-img").remove();
-        }
-
-        this.state.openedCards = openedCards;
-        this.setState({imageUrl : openedCards[0].image_uris.small})
-       
-        console.log("Set contains some cards!");
-        console.log("you opened: " + openedCards);
-
-        //TODO: open a pack! Will have to decide how many rares/commons per pack
-    }
-
-    handleChange(e) {
-        if (e.target.value) {
-            this.setState({selectedSet : e.target.value});
-            this.grabCardsForSet(e.target.value);
-        }
-    }
-
-    convertBooster(booster){
-        if(booster == null){
-            let retVal = {
-                "rare" : 1,
-                "uncommon" : 3,
-                "common" : 11
-            }
-            return retVal;
-        }
-        
-        console.log(booster);
-        
-       
-        let rareCount = 0;
-        let uncommonCount = 0;
-        let commonCount = 0;
-        booster.forEach(b =>{
-            if(Array.isArray(b)){
-                if(b[0]){
-                    rareCount ++;
-                }
-            }
-            switch(b){
-                case "rare": rareCount ++; break;
-                case "uncommon" : uncommonCount ++; break;
-                case "common" : commonCount ++; break;
-                default : commonCount ++; break;
-            }
-
-        })
-        let retVal = {
-            "rare" : rareCount,
-            "uncommon" : uncommonCount,
-            "common" : commonCount
-        }
-        return retVal;
-    }
-
-    async getCardsForSet(setCode,setSize){
-        this.state.rareList = [];
-        this.state.uncommonList = [];
-        this.state.commonList = [];
-        document.getElementById("open-button").disabled = true;
-
-        for (let i = 1; i < setSize; i ++){
-            await axios.get("https://api.scryfall.com/cards/" + setCode + "/" + i).then(card=>{
-                if(card != null){
-                    if(card.data != null){
-                        if(card.data.rarity === "rare" || card.data.rarity === "mythic"){
-                            this.state.rareList.push(card.data);
-                        }
-                        else if(card.data.rarity === "uncommon"){
-                            this.state.uncommonList.push(card.data)
-                        }
-                        else{
-                            this.state.commonList.push(card.data);
-                        }
-                    }
-                   
-
-                }
-            }).catch(e=>{
-                console.log("got a dud!!");
-            })};
-        
-    }
-
-
-    render() {
-        var options = [];
-        Object.keys(this.state.setMap).forEach(x =>
-            options.push({ 'value': this.state.setMap[x], 'label': x }));
-
-        return (<div class="background">
-            <div className="dropdownMenu">
-                <select onChange={this.handleChange} options={options}>
-                    {options.map((option) => <option value={options.value}>{option.label}</option>)}
-                </select>
-            </div>
-            <button type="button" id="open-button" onClick={this.handleOpenPack}>Open pack!</button>
-            <br></br>
-            <div class = "pack" id="pack-frame">
-                <img class="hidden" id="base-img" src={""} alt={""}></img>
-            </div>
-        </div>);
-    }
-
-
+      switch (slot) {
+        case 'rare':
+        case 'mythic':
+          return {
+            ...counts,
+            rare: counts.rare + 1,
+          };
+        case 'uncommon':
+          return {
+            ...counts,
+            uncommon: counts.uncommon + 1,
+          };
+        case 'common':
+          return {
+            ...counts,
+            common: counts.common + 1,
+          };
+        default:
+          return {
+            ...counts,
+            common: counts.common + 1,
+          };
+      }
+    },
+    { rare: 0, uncommon: 0, common: 0 }
+  );
 }
 
+function pickRandomCards(cards, count) {
+  if (!cards.length || count <= 0) {
+    return [];
+  }
 
+  return Array.from({ length: count }, () => {
+    const index = Math.floor(Math.random() * cards.length);
+    return cards[index];
+  });
+}
+
+function SetDropdown() {
+  const [sets, setSets] = useState([]);
+  const [selectedSetName, setSelectedSetName] = useState('');
+  const [cardsByRarity, setCardsByRarity] = useState({
+    common: [],
+    uncommon: [],
+    rare: [],
+  });
+  const [openedCards, setOpenedCards] = useState([]);
+  const [isLoadingSets, setIsLoadingSets] = useState(true);
+  const [isLoadingCards, setIsLoadingCards] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadSets() {
+      setIsLoadingSets(true);
+      setErrorMessage('');
+
+      try {
+        const fetchedSets = await fetchExpansionSets();
+
+        if (isCancelled) {
+          return;
+        }
+
+        setSets(fetchedSets);
+        setSelectedSetName(fetchedSets[0]?.name ?? '');
+      } catch (error) {
+        if (!isCancelled) {
+          setErrorMessage('Unable to load sets right now.');
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingSets(false);
+        }
+      }
+    }
+
+    loadSets();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const setMap = useMemo(
+    () =>
+      sets.reduce((map, set) => {
+        map[set.name] = set;
+        return map;
+      }, {}),
+    [sets]
+  );
+
+  const selectedSet = selectedSetName ? setMap[selectedSetName] : null;
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadCards() {
+      if (!selectedSet?.code) {
+        setCardsByRarity({
+          common: [],
+          uncommon: [],
+          rare: [],
+        });
+        return;
+      }
+
+      setIsLoadingCards(true);
+      setErrorMessage('');
+      setOpenedCards([]);
+
+      try {
+        const groupedCards = await fetchSetCards(selectedSet.code);
+
+        if (!isCancelled) {
+          setCardsByRarity(groupedCards);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setCardsByRarity({
+            common: [],
+            uncommon: [],
+            rare: [],
+          });
+          setErrorMessage(`Unable to load cards for ${selectedSet.name}.`);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingCards(false);
+        }
+      }
+    }
+
+    loadCards();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedSet]);
+
+  function handleOpenPack() {
+    if (!selectedSet) {
+      return;
+    }
+
+    const boosterTemplate = convertBooster(selectedSet.booster);
+    const nextOpenedCards = [
+      ...pickRandomCards(cardsByRarity.rare, boosterTemplate.rare),
+      ...pickRandomCards(cardsByRarity.uncommon, boosterTemplate.uncommon),
+      ...pickRandomCards(cardsByRarity.common, boosterTemplate.common),
+    ];
+
+    setOpenedCards(nextOpenedCards);
+  }
+
+  const canOpenPack =
+    !isLoadingSets &&
+    !isLoadingCards &&
+    selectedSet &&
+    cardsByRarity.rare.length > 0 &&
+    cardsByRarity.uncommon.length > 0 &&
+    cardsByRarity.common.length > 0;
+
+  return (
+    <div className="background">
+      <div className="dropdownMenu">
+        <select
+          onChange={(event) => setSelectedSetName(event.target.value)}
+          value={selectedSetName}
+          disabled={isLoadingSets || !sets.length}
+        >
+          {sets.map((set) => (
+            <option key={set.code} value={set.name}>
+              {set.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button type="button" id="open-button" onClick={handleOpenPack} disabled={!canOpenPack}>
+        {isLoadingCards ? 'Loading cards...' : 'Open pack!'}
+      </button>
+      {errorMessage ? <p className="statusMessage">{errorMessage}</p> : null}
+      {!errorMessage && isLoadingSets ? <p className="statusMessage">Loading sets...</p> : null}
+      <div className="pack" id="pack-frame">
+        {openedCards.map((card, index) => (
+          <img
+            key={`${card.id ?? card.name}-${index}`}
+            className="card"
+            src={card.image_uris?.small ?? ''}
+            alt={card.name}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default SetDropdown;
